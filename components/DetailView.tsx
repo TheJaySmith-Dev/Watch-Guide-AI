@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
-import { getTitleDetails } from '../services/mdblist';
-import { analyzeTitle, getTrailerUrl } from '../services/gemini';
-import { analyzeTitleWithPoe } from '../services/poe';
-import { MovieDetail, AIAnalysis } from '../types';
+import { getTitleDetails } from '../services/mdblist.ts';
+import { analyzeTitle, getTrailerUrl } from '../services/gemini.ts';
+import { analyzeTitleWithPoe } from '../services/poe.ts';
+import { MovieDetail, AIAnalysis } from '../types.ts';
 
 interface DetailViewProps {
   id: string;
@@ -24,16 +24,12 @@ const DetailView: React.FC<DetailViewProps> = ({ id, onBack }) => {
       const details = await getTitleDetails(id);
       if (details) {
         setMovie(details);
-        
         try {
-          // Attempt Gemini first
           const [analysisRes, trailerRes] = await Promise.all([
             analyzeTitle(details.title, details.year, details.description),
             getTrailerUrl(details.title, details.year)
           ]);
-          
           setAnalysis(analysisRes);
-          // Prioritize the URL found by Gemini Search over the static DB one
           setTrailerUrl(trailerRes || details.trailer || null);
           setEngineSource('Gemini');
         } catch (error) {
@@ -56,7 +52,6 @@ const DetailView: React.FC<DetailViewProps> = ({ id, onBack }) => {
 
   const extractYoutubeId = (url?: string) => {
     if (!url) return null;
-    // Enhanced regex for various YouTube URL patterns
     const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/|youtube\.com\/live\/)([a-zA-Z0-9_-]{11})/i;
     const match = url.match(regex);
     return match ? match[1] : null;
@@ -185,27 +180,15 @@ const DetailView: React.FC<DetailViewProps> = ({ id, onBack }) => {
         </div>
       </section>
 
-      {/* Trailer Modal */}
       {showTrailer && embedUrl && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 md:p-12 animate-in fade-in duration-300">
-          <div 
-            className="absolute inset-0 bg-black/95 backdrop-blur-2xl" 
-            onClick={() => setShowTrailer(false)}
-          />
+          <div className="absolute inset-0 bg-black/95 backdrop-blur-2xl" onClick={() => setShowTrailer(false)} />
           <div className="relative w-full max-w-6xl aspect-video glass rounded-[40px] overflow-hidden shadow-2xl border border-white/10 animate-in zoom-in-95 duration-500">
             <button 
               onClick={() => setShowTrailer(false)}
               className="absolute top-8 right-8 z-10 w-12 h-12 rounded-full glass flex items-center justify-center text-white/60 hover:text-white transition-all hover:scale-110"
-            >
-              ✕
-            </button>
-            <iframe 
-              src={embedUrl}
-              className="w-full h-full"
-              allow="autoplay; encrypted-media; picture-in-picture"
-              allowFullScreen
-              title={`${movie.title} Official Trailer`}
-            />
+            >✕</button>
+            <iframe src={embedUrl} className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen />
           </div>
         </div>
       )}
@@ -216,9 +199,7 @@ const DetailView: React.FC<DetailViewProps> = ({ id, onBack }) => {
 const AnalysisSection: React.FC<{ title: string; content: string; icon: string }> = ({ title, content, icon }) => (
   <div className="glass-card p-8 rounded-3xl border border-white/5 hover:border-white/10 transition-colors group">
     <div className="flex items-start gap-6">
-      <div className="text-2xl bg-white/5 w-12 h-12 flex items-center justify-center rounded-2xl group-hover:bg-white/10 transition-colors">
-        {icon}
-      </div>
+      <div className="text-2xl bg-white/5 w-12 h-12 flex items-center justify-center rounded-2xl group-hover:bg-white/10 transition-colors">{icon}</div>
       <div className="space-y-3">
         <h3 className="text-lg font-semibold text-white/90">{title}</h3>
         <p className="text-white/50 leading-relaxed font-light">{content}</p>

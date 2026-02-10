@@ -1,12 +1,12 @@
 
-import React, { useState, useEffect } from 'react';
-import { View, MovieDetail } from './types';
-import Navbar from './components/Navbar';
-import Home from './components/Home';
-import ExplainerView from './components/ExplainerView';
-import ComparisonView from './components/ComparisonView';
-import TrendsView from './components/TrendsView';
-import DetailView from './components/DetailView';
+import React, { useState } from 'react';
+import { View } from './types.ts';
+import Navbar from './components/Navbar.tsx';
+import Home from './components/Home.tsx';
+import ExplainerView from './components/ExplainerView.tsx';
+import ComparisonView from './components/ComparisonView.tsx';
+import TrendsView from './components/TrendsView.tsx';
+import DetailView from './components/DetailView.tsx';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>(View.Home);
@@ -38,7 +38,6 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-black text-white selection:bg-white/20">
-      {/* Background decoration */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-900/10 blur-[120px] rounded-full" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-900/10 blur-[120px] rounded-full" />
