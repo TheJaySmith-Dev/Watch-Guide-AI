@@ -1,0 +1,7 @@
+{
+  "name": "FrameDecoded",
+  "description": "A premium, Apple-inspired AI explainer for film and television that analyzes movies and shows without making recommendations.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
