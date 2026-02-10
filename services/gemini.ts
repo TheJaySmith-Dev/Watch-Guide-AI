@@ -2,12 +2,16 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { AIAnalysis, ComparisonAnalysis, TrendAnalysis } from '../types';
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+// Helper to safely access environment variables and initialize AI client
+const getAI = () => {
+  const apiKey = (typeof process !== 'undefined' && process.env?.API_KEY) || '';
+  return new GoogleGenAI({ apiKey });
+};
 
-// Using gemini-2.0-flash as specified
 const MODEL_NAME = "gemini-2.0-flash";
 
 export const analyzeTitle = async (title: string, year: number, description: string): Promise<AIAnalysis> => {
+  const ai = getAI();
   const prompt = `Analyze the ${year} title "${title}". Context: ${description}. 
   FrameDecoded Purpose: Explain why it resonates, why it's divisive, what's misunderstood, and its legacy. 
   Rules: Calm, insightful tone. NO recommendations. Return JSON.`;
@@ -34,7 +38,8 @@ export const analyzeTitle = async (title: string, year: number, description: str
 };
 
 export const getTrailerUrl = async (title: string, year: number): Promise<string | null> => {
-  const prompt = `Find the official YouTube trailer for the ${year} film or show "${title}". Search for the official high-quality YouTube link.`;
+  const ai = getAI();
+  const prompt = `Find the official YouTube trailer for the ${year} film or show "${title}". Search specifically for high-quality official channels.`;
   
   try {
     const response = await ai.models.generateContent({
@@ -50,15 +55,15 @@ export const getTrailerUrl = async (title: string, year: number): Promise<string
     if (chunks) {
       for (const chunk of chunks) {
         const uri = chunk.web?.uri;
-        if (uri && (uri.includes('youtube.com/watch') || uri.includes('youtu.be/'))) {
+        if (uri && (uri.includes('youtube.com/watch') || uri.includes('youtu.be/') || uri.includes('youtube.com/live/'))) {
           return uri;
         }
       }
     }
 
-    // Strategy 2: Look in the text output
+    // Strategy 2: Look in the text output for any link
     const text = response.text || "";
-    const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i;
+    const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/|youtube\.com\/live\/)([a-zA-Z0-9_-]{11})/i;
     const match = text.match(youtubeRegex);
     if (match) return match[0];
 
@@ -70,6 +75,7 @@ export const getTrailerUrl = async (title: string, year: number): Promise<string
 };
 
 export const compareTitles = async (title1: string, title2: string): Promise<ComparisonAnalysis> => {
+  const ai = getAI();
   const prompt = `Compare "${title1}" and "${title2}". 
   Explain differences in tone, storytelling approach, and audience reception. 
   Rules: Strictly neutral and informational. NO winner, NO recommendation.`;
@@ -96,6 +102,7 @@ export const compareTitles = async (title1: string, title2: string): Promise<Com
 };
 
 export const analyzeTrend = async (trend: string): Promise<TrendAnalysis> => {
+  const ai = getAI();
   const prompt = `Explain the movie/TV trend: "${trend}". 
   Provide historical background, cultural impact, and why it is happening now. 
   Rules: Insightful, editorial tone. Use data-driven reasoning where possible.`;
@@ -121,23 +128,24 @@ export const analyzeTrend = async (trend: string): Promise<TrendAnalysis> => {
 };
 
 export const askExplainerGemini = async (question: string): Promise<string> => {
+  const ai = getAI();
   const response = await ai.models.generateContent({
     model: MODEL_NAME,
     contents: question,
     config: {
-      systemInstruction: "You are FrameDecoded, a film scholar. Analyze 'why' movies/shows are cultural touchpoints. NEVER recommend what to watch. When discussing a specific title, always attempt to find its official YouTube trailer URL using your Google Search tool and include the link clearly in your response so the UI can embed it.",
+      systemInstruction: "You are FrameDecoded, a film scholar. Analyze 'why' movies/shows are cultural touchpoints. NEVER recommend what to watch. When discussing a title, ALWAYS try to find and provide its official YouTube trailer URL using your Google Search tool.",
       tools: [{ googleSearch: {} }]
     }
   });
 
   let output = response.text || "Analysis unavailable.";
   
-  // If the model found a link via search but didn't put it in text, we append it
+  // Ensure the link is appended if found but not present in text
   const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
-  if (chunks && !output.includes('youtube.com') && !output.includes('youtu.be')) {
-    const trailer = chunks.find(c => c.web?.uri?.includes('youtube.com/watch') || c.web?.uri?.includes('youtu.be/'));
+  if (chunks && !output.toLowerCase().includes('youtube.com') && !output.toLowerCase().includes('youtu.be')) {
+    const trailer = chunks.find(c => c.web?.uri?.includes('youtube.com/watch') || c.web?.uri?.includes('youtu.be/') || c.web?.uri?.includes('youtube.com/live/'));
     if (trailer?.web?.uri) {
-      output += `\n\nOfficial Trailer: ${trailer.web.uri}`;
+      output += `\n\nOfficial Trailer Link: ${trailer.web.uri}`;
     }
   }
 

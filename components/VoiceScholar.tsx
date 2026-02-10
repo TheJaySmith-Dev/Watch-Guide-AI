@@ -1,6 +1,6 @@
 
 import React, { useEffect, useRef, useState } from 'react';
-import { GoogleGenAI, Modality } from '@google/genai';
+import { GoogleGenAI } from '@google/genai';
 
 interface VoiceScholarProps {
   onClose: () => void;
@@ -57,7 +57,8 @@ const VoiceScholar: React.FC<VoiceScholarProps> = ({ onClose }) => {
 
   useEffect(() => {
     let nextStartTime = 0;
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+    const apiKey = (typeof process !== 'undefined' && process.env?.API_KEY) || '';
+    const ai = new GoogleGenAI({ apiKey });
     
     const startSession = async () => {
       try {
@@ -105,7 +106,7 @@ const VoiceScholar: React.FC<VoiceScholarProps> = ({ onClose }) => {
             onclose: () => setStatus('Connection closed.'),
           },
           config: {
-            responseModalities: [Modality.AUDIO],
+            responseModalities: ['AUDIO' as any],
             speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Zephyr' } } },
             systemInstruction: "You are the FrameDecoded Voice Scholar. You analyze cinema and television with an intelligent, unhurried, and neutral tone. You provide context, explain cultural resonance, and discuss craft. You NEVER give recommendations or suggest what to watch. You speak like a film professor in a private session."
           }
@@ -147,7 +148,7 @@ const VoiceScholar: React.FC<VoiceScholarProps> = ({ onClose }) => {
         </div>
         
         <div className="space-y-4">
-          <h2 className="text-2xl font-bold tracking-tight">Voice Scholar</h2>
+          <h2 className="text-2xl font-bold tracking-tight text-white">Voice Scholar</h2>
           <p className="text-white/40 font-light leading-relaxed">{status}</p>
         </div>
 
